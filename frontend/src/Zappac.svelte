@@ -252,6 +252,7 @@
   }
 
   .input {
+    --wails-draggable: drag;
     width: 100%;
     background: rgba(0, 0, 0, 0.4);
     padding: $padding;
@@ -265,6 +266,7 @@
   }
 
   .info {
+    --wails-draggable: drag;
     flex-grow: 1;
     font-family: $monospace;
 
@@ -305,6 +307,7 @@
   }
 
   .history {
+    --wails-draggable: drag;
     font-family: $monospace;
     flex-shrink: 1;
     overflow: hidden;
@@ -351,6 +354,7 @@
   }
 
   footer {
+    --wails-draggable: drag;
     padding: $padding;
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid rgba(0, 0, 0, 0.3);

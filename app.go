@@ -122,6 +122,10 @@ func (a *App) Exec(input string, updateVariables bool) ExecResult {
 		a.state.History = append([]HistoryItem{{input, result}}, a.state.History...)
 		a.state.Variables = map[string]string{}
 
+		if nodes[0].Type() == zappaclang.NodeClear {
+			a.state.History = []HistoryItem{}
+		}
+
 		for key, value := range a.zs.Variables {
 			a.state.Variables[key] = value.String()
 		}
