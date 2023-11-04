@@ -79,7 +79,7 @@ jobs:
         run: |
           wails build --platform windows/amd64 --nsis
           ls -lha build/bin
-          cp -a build/bin/zappac-gui-amd64-installer.exe artifacts/zappac-gui-amd64-installer.exe
+          cp -a build/bin/Zappac-gui-amd64-installer.exe artifacts/zappac-gui-amd64-installer.exe
 
       - name: Build for Windows arm64
         run: |
@@ -91,7 +91,7 @@ jobs:
         run: |
           wails build --platform windows/arm64 --nsis
           ls -lha build/bin
-          cp -a build/bin/zappac-gui-arm64-installer.exe artifacts/zappac-gui-arm64-installer.exe
+          cp -a build/bin/Zappac-gui-arm64-installer.exe artifacts/zappac-gui-arm64-installer.exe
 
       # TODO: macOS build
 
