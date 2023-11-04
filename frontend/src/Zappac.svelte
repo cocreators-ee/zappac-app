@@ -10,7 +10,7 @@
     variables,
   } from "./lib/state.js"
   import { onDestroy, onMount } from "svelte"
-  import * as keysight from "keysight"
+  import keysight from "keysight"
   import * as nodes from "./lib/nodes"
 
   let formatNumbers = true

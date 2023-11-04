@@ -23,6 +23,7 @@ export const nodeType = [
   "SetOutput",
   "Save",
   "Load",
+  "Clear",
 ]
 
 export const operators = [
@@ -41,6 +42,6 @@ export const operators = [
   "RShift",
 ]
 
-export const functions = ["Abs", "SetOutput", "Save", "Load"]
+export const functions = ["Abs", "SetOutput", "Save", "Load", "Clear"]
 
 export const values = ["Number", "Variable"]
