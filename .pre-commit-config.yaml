@@ -1,0 +1,60 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: |
+          (?x)(
+            ^.*/wailsjs/.*$|
+            ^.*/package.json.md5$|
+            ^.*/vendor/.*$|
+            ^NOT-EXISTING-LAST-ENTRY$
+          )
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)(
+            ^.*/wailsjs/.*$|
+            ^.*/package.json.md5$|
+            ^.*/vendor/.*$|
+            ^NOT-EXISTING-LAST-ENTRY$
+          )
+      # All non-bat files should end with LF
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        exclude: |
+          (?x)(
+            \.bat$|
+            ^NOT-EXISTING-LAST-ENTRY$
+          )
+      # Bat files should be CRLF ending
+      - id: mixed-line-ending
+        args: ["--fix=crlf"]
+        files: \.bat$
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.0.3
+          - prettier-plugin-svelte@3.0.3
+        exclude: |
+          (?x)(
+            ^.*/wailsjs/.*$|
+            ^.*/package.json.md5$|
+            ^.*/vendor/.*$|
+            /pnpm-lock.yaml$|
+            ^NOT-EXISTING-LAST-ENTRY$
+          )
+  - repo: https://github.com/lietu/go-pre-commit
+    rev: v0.1.0
+    hooks:
+      - id: errcheck
+      - id: go-fmt-goimports
+      - id: go-test
+      - id: go-vet
+      - id: gofumpt
+      - id: golint
+      - id: staticcheck
+      - id: go-mod-tidy

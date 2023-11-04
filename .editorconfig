@@ -1,0 +1,5 @@
+[{*.md,*.json,*.js,*.ts,*.html,*.svelte}]
+indent_size = 2
+
+[*.go]
+indent_size = 4

@@ -1,0 +1,29 @@
+{
+  "name": "zappac-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm install && vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "@tsconfig/svelte": "^3.0.0",
+    "prettier": "^3.0.3",
+    "prettier-plugin-svelte": "^3.0.3",
+    "svelte": "^3.49.0",
+    "svelte-check": "^2.8.0",
+    "svelte-preprocess": "^4.10.7",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4",
+    "vite": "^3.0.7"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.0.18",
+    "@fontsource-variable/merriweather-sans": "^5.0.9",
+    "keysight": "^0.1.0"
+  }
+}

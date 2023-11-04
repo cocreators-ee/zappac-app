@@ -1,0 +1,4 @@
+frontend/dist
+build
+frontend/wailsjs
+.vscode
