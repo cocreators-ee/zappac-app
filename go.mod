@@ -3,7 +3,7 @@ module zappac
 go 1.18
 
 require (
-	github.com/cocreators-ee/zappaclang v0.0.0-20231105135139-0e5323d6e57a
+	github.com/cocreators-ee/zappaclang v0.0.0-20231105154659-ae54fb6d2d32
 	github.com/wailsapp/wails/v2 v2.6.0
 )
 

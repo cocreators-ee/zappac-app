@@ -1,6 +1,7 @@
 // Keep this synced with zappaclang nodetype_string.go
 export const nodeType = [
   "EOF",
+  "ParsingStopped",
   "Assign",
   "LParen",
   "RParen",

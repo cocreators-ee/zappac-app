@@ -10,8 +10,8 @@
     variables,
   } from "./lib/state.js"
   import { onDestroy, onMount } from "svelte"
+  import { numberFormat, parseInputText } from "./lib/formatting"
   import keysight from "keysight"
-  import * as nodes from "./lib/nodes"
 
   let formatNumbers = true
   let inputText = ""
@@ -24,88 +24,10 @@
     classes: string[]
   }
 
-  function parseInputText(inputText, parsedNodes, formatNumbers) {
-    const result = []
-
-    let lastPos = 0
-
-    parsedNodes.forEach((node, idx) => {
-      if (node.NodeType == "EOF") {
-        // Nothing much to do
-        lastPos = node.Pos
-        return
-      }
-
-      const right = parsedNodes[idx + 1]
-      const start = node.Pos
-      const end = right !== undefined ? right.Pos : start
-      let value = inputText.substring(start, end)
-
-      // console.log(start, end, value)
-
-      let classes = [node.NodeType]
-      if (nodes.values.includes(node.NodeType)) {
-        classes.push("value")
-      }
-      if (node.NodeType === "Number") {
-        value = numberFormat(value, formatNumbers)
-      }
-      if (node.NodeType === "Variable") {
-        classes.push("variable")
-      }
-      if (node.NodeType === "Assign") {
-        classes.push("assign")
-      }
-      if (nodes.functions.includes(node.NodeType)) {
-        classes.push("function")
-      }
-      if (nodes.operators.includes(node.NodeType)) {
-        classes.push("operator")
-      }
-
-      result.push({
-        value: value,
-        classes: classes,
-      })
-
-      lastPos = end
-    })
-
-    if (lastPos < inputText.length) {
-      result.push({
-        value: inputText.substr(lastPos),
-        classes: ["unparsed"],
-      })
-    }
-
-    return result
-  }
-
   $: {
     inputText = $input
     historyItems = $history
     inputField = parseInputText(inputText, $parsedNodes, formatNumbers)
-  }
-
-  const NumberFormatter = new Intl.NumberFormat()
-
-  export function numberFormat(input: string, formatNumbers: boolean): string {
-    if (!formatNumbers) {
-      return input
-    }
-
-    // 0xff 0755 b0001
-    if (input.length > 1 && ["0", "b"].includes(input[0])) {
-      return input
-    }
-
-    const result = NumberFormatter.format(input)
-
-    if (result === "NaN") {
-      return input
-    }
-
-    return result
   }
 
   async function onInput(evt: KeyboardEvent) {
