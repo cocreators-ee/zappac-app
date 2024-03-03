@@ -17,7 +17,11 @@
   let inputText = ""
   let historyItems = []
   let inputField = []
-  let cursor = -1
+  let cursorNodePos = 0
+  let cursorWithinNode = false
+  let cursorY = -1
+  let cursorX = 0
+  let nodes = []
 
   type Node = {
     value: string
@@ -27,7 +31,35 @@
   $: {
     inputText = $input
     historyItems = $history
-    inputField = parseInputText(inputText, $parsedNodes, formatNumbers)
+    const parseResult = parseInputText(inputText, $parsedNodes, formatNumbers, cursorX)
+    cursorNodePos = parseResult.cursorNodePos
+    inputField = parseResult.inputField
+    cursorWithinNode = parseResult.cursorWithinNode
+    nodes = $parsedNodes
+  }
+
+  function getPrevNode(cursorNode) {
+    const prevNode = nodes[cursorNode - 1]
+    if (prevNode.NodeType === "EOF") {
+      return getPrevNode(cursorNode - 1)
+    }
+    return prevNode
+  }
+
+  function getNextNode(cursorNode) {
+    const nextNode = nodes[cursorNode + 1]
+    if (nextNode.NodeType === "EOF") {
+      return undefined
+    }
+    return nextNode
+  }
+
+  function getLastNodePos() {
+    let lastNodePos = nodes.length - 1
+    if (nodes[lastNodePos].NodeType === "EOF") {
+      lastNodePos -= 1
+    }
+    return lastNodePos
   }
 
   async function onInput(evt: KeyboardEvent) {
@@ -47,33 +79,134 @@
 
     if (key === "\n") {
       if (await exec(inputText)) {
-        cursor = -1
+        cursorY = -1
+        cursorX = inputText.length
       }
     } else if (key === "a" && evt.ctrlKey) {
       // Ctrl+a
       evt.preventDefault()
     } else if (key === "\b") {
+      // backspace
       if (inputText.length > 0) {
-        input.set(inputText.substring(0, inputText.length - 1))
+        if (evt.ctrlKey) {
+          let left, right
+          if (cursorWithinNode) {
+            // Deleting the start of this node
+            const node = nodes[cursorNodePos]
+            left = inputText.substring(0, node.Pos)
+            right = inputText.substring(cursorX)
+            cursorX = node.Pos
+          } else {
+            // Between nodes, deleting previous node
+            const node = getPrevNode(cursorNodePos)
+            left = inputText.substring(0, node.Pos)
+            right = inputText.substring(cursorX)
+            cursorX = node.Pos
+          }
+          input.set(left + right)
+        } else {
+          // Delete previous character
+          const left = inputText.substring(0, Math.max(cursorX - 1, 0))
+          const right = inputText.substring(cursorX)
+          input.set(left + right)
+          if (cursorX > 0) {
+            cursorX -= 1
+          }
+        }
       }
       evt.preventDefault()
+    } else if (key === "delete") {
+      if (inputText.length > 0) {
+        if (evt.ctrlKey) {
+          let left = ""
+          let right = ""
+
+          if (cursorWithinNode) {
+            // Delete from cursor to the end of this node
+            const node = getNextNode(cursorNodePos)
+            left = inputText.substring(0, cursorX)
+            if (node) {
+              right = inputText.substring(node.Pos)
+            }
+          } else {
+            // Between nodes, delete next node
+            const lastNodePos = getLastNodePos()
+            left = inputText.substring(0, cursorX)
+            if (cursorNodePos < lastNodePos) {
+              right = inputText.substring(nodes[cursorNodePos + 1].Pos)
+            }
+          }
+          input.set(left + right)
+        } else {
+          // Delete next character
+          const left = inputText.substring(0, cursorX)
+          const right = inputText.substring(cursorX + 1)
+          input.set(left + right)
+        }
+      }
+    } else if (key === "left") {
+      if (cursorX > 0) {
+        if (evt.ctrlKey) {
+          if (cursorNodePos === 0) {
+            // Within first node, move to start
+            cursorX = 0
+          } else {
+            if (cursorWithinNode) {
+              // Move to start of current node
+              cursorX = nodes[cursorNodePos].Pos
+            } else {
+              // Between nodes, move to start of previous node
+              const prevNode = getPrevNode(cursorNodePos)
+              cursorX = prevNode.Pos
+            }
+          }
+        } else {
+          // Move 1 position left
+          cursorX -= 1
+        }
+      }
+    } else if (key === "right") {
+      if (cursorX < inputText.length) {
+        if (evt.ctrlKey) {
+          const lastNodePos = getLastNodePos()
+          if (cursorNodePos >= lastNodePos) {
+            // At the last visible node, move to end
+            cursorX = inputText.length
+          } else {
+            // Move to the start of the next node
+            cursorX = getNextNode(cursorNodePos).Pos
+          }
+        } else {
+          // Move 1 position right
+          cursorX += 1
+        }
+      }
     } else if (key === "up") {
-      if (historyItems.length > cursor + 1) {
-        cursor++
-        input.set(historyItems[cursor].Input)
+      if (historyItems.length > cursorY + 1) {
+        cursorY++
+        input.set(historyItems[cursorY].Input)
       }
     } else if (key === "down") {
-      if (cursor >= 0) {
-        cursor--
+      if (cursorY >= 0) {
+        cursorY--
 
-        if (cursor >= 0) {
-          input.set(historyItems[cursor].Input)
+        if (cursorY >= 0) {
+          input.set(historyItems[cursorY].Input)
         } else {
           input.set("")
         }
       }
+    } else if (key === "home") {
+      cursorX = 0
+    } else if (key === "end") {
+      cursorX = inputText.length
     } else if (printable) {
-      input.set(inputText + evt.key)
+      const left = inputText.substring(0, cursorX)
+      const right = inputText.substring(cursorX)
+      input.set(left + evt.key + right)
+      cursorX += evt.key.length
+    } else {
+      console.log(`Ignored ${key}`)
     }
   }
 
@@ -132,7 +265,7 @@
   {#if $history.length}
     <div class="history">
       {#each $history as item, idx}
-        <div class={"history-row " + (idx === cursor ? "current" : "")}>
+        <div class={"history-row " + (idx === cursorY ? "current" : "")}>
           <span class="history-input">{item.Input}</span>
           {#if !item.Input.includes("=")}
             <span class="equals">=</span>
@@ -313,5 +446,28 @@
 
   .unparsed {
     color: #7e7e7e;
+  }
+
+  @keyframes blink {
+    0% {
+      opacity: 1;
+    }
+    49% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .cursor {
+    display: inline-block;
+    background-color: #ffffffc0;
+    width: 2px;
+    height: 0.75rem;
+    animation: blink 1200ms linear infinite;
   }
 </style>

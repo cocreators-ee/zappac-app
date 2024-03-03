@@ -1,31 +1,33 @@
 import * as nodes from "./nodes"
 
-export function parseInputText(inputText, parsedNodes, formatNumbers) {
+const DEBUG_PARSE = false
+
+export function parseInputText(inputText, parsedNodes, formatNumbers, cursorX) {
   const result = []
   let lastPos = 0
-  parsedNodes.forEach((node, idx) => {
-    if (node.NodeType == "EOF" || node.NodeType == "ParsingStopped") {
-      // Nothing much to do
-      lastPos = node.Pos
-      return
-    }
-    if (node.NodeType == "ParsingStopped") {
-      // We should stop here because nothing after this is known
-      lastPos = node.Pos
-      return
-    }
+  let hasCursor = false
+  let cursorNodePos = 0
+  let cursorWithinNode = false
 
-    const right = parsedNodes[idx + 1]
-    const start = node.Pos
-    const end = right !== undefined ? right.Pos : start
-    let value = inputText.substring(start, end)
+  DEBUG_PARSE && console.table(parsedNodes)
 
+  function addCursor(nodePos, withinNode) {
+    if (!hasCursor) {
+      result.push({ value: "", classes: ["cursor"] })
+      cursorNodePos = nodePos
+      cursorWithinNode = withinNode
+      hasCursor = true
+    }
+  }
+
+  if (cursorX === 0) {
+    addCursor(0, false)
+  }
+
+  function addNode(value, node) {
     let classes = [node.NodeType]
     if (nodes.values.includes(node.NodeType)) {
       classes.push("value")
-    }
-    if (node.NodeType === "Number") {
-      value = numberFormat(value, formatNumbers)
     }
     if (node.NodeType === "Variable") {
       classes.push("variable")
@@ -44,6 +46,58 @@ export function parseInputText(inputText, parsedNodes, formatNumbers) {
       value: value,
       classes: classes,
     })
+  }
+
+  parsedNodes.forEach((node, idx) => {
+    if (node.NodeType == "EOF" || node.NodeType == "ParsingStopped") {
+      // Nothing much to do
+      lastPos = node.Pos
+      return
+    }
+    if (node.NodeType == "ParsingStopped") {
+      // We should stop here because nothing after this is known
+      lastPos = node.Pos
+      return
+    }
+
+    const right = parsedNodes[idx + 1]
+    let start = node.Pos
+    const end = right !== undefined ? right.Pos : start + node.value.length
+    let value = inputText.substring(start, end)
+    if (node.NodeType === "Number") {
+      value = numberFormat(value, formatNumbers)
+    }
+
+    if (start === cursorX) {
+      addCursor(idx, false)
+    } else if (!hasCursor && cursorX < end) {
+      // Cursor within node, split it
+      if (node.NodeType === "Number") {
+        // Numbers include "imaginary" commas
+        let split = cursorX - start
+        // Move cursor forward by amount of commas to the left
+        const commas = value.substring(0, split).split(",").length - 1
+        split += commas
+        if (value[split] === ",") {
+          // If splitting left of a comma, jump to the right side of it
+          split += 1
+        }
+        const left = value.substring(0, split)
+        addNode(left, node)
+        addCursor(idx, true)
+        start = split
+        value = value.substring(split)
+      } else {
+        const left = inputText.substring(start, cursorX)
+        addNode(left, node)
+        addCursor(idx, true)
+        start = cursorX
+        value = inputText.substring(start, end)
+      }
+    }
+
+    DEBUG_PARSE && console.log(start, end, value)
+    addNode(value, node)
 
     lastPos = end
   })
@@ -55,7 +109,17 @@ export function parseInputText(inputText, parsedNodes, formatNumbers) {
     })
   }
 
-  return result
+  if (cursorX === inputText.length) {
+    addCursor(parsedNodes.length, false)
+  }
+
+  DEBUG_PARSE && console.table(result)
+
+  return {
+    cursorWithinNode: cursorWithinNode,
+    cursorNodePos: cursorNodePos,
+    inputField: result,
+  }
 }
 
 const NumberFormatter = new Intl.NumberFormat()
